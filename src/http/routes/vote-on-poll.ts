@@ -1,4 +1,5 @@
 import z from "zod"
+import { randomUUID } from "node:crypto"
 import { FastifyInstance } from "fastify"
 
 export async function voteOnPoll(app: FastifyInstance) {
@@ -14,7 +15,19 @@ export async function voteOnPoll(app: FastifyInstance) {
     const { pollId } = voteOnPollParams.parse(request.params)
     const { pollOptionId } = voteOnPollBody.parse(request.body)
 
-    // the route is not yet finalized, this is just its structure
-    return reply.status(201).send()
+    let { sessionId } = request.cookies
+
+    if (!sessionId) {
+      sessionId = randomUUID()
+
+      reply.setCookie('sessionId', sessionId, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+        signed: true,
+        httpOnly: true,
+      })
+    }
+
+    return reply.status(201).send({ sessionId })
   })
 }
